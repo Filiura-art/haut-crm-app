@@ -1,0 +1,16 @@
+import { Syne } from "next/font/google";
+
+const syne = Syne({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-syne" });
+
+export const metadata = {
+  title: "Haut CGI — Client Ledger",
+  description: "Internal client CRM for Haut CGI",
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" className={syne.variable}>
+      <body style={{ margin: 0 }}>{children}</body>
+    </html>
+  );
+}
