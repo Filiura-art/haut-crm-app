@@ -20,7 +20,7 @@ const STAGES = [
 
 const INDUSTRIES = ["Beauty & Fashion", "Luxury", "Consumer Electronics", "Automotive", "Hospitality", "Retail", "Real Estate", "Other"];
 const CONTACT_TYPES = ["Brand", "Agency"];
-const LEAD_SOURCES = ["Sahal", "Google Ads", "Cold Outreach — Email", "Cold Outreach — LinkedIn", "Referral", "Other"];
+const LEAD_SOURCES = ["Sahal", "Google Ads", "Cold Outreach — Email", "Cold Outreach — LinkedIn", "Referral", "PR", "Social Media", "Other"];
 const CLIENT_HISTORY = ["Not Purchased Yet", "First Sale", "Repeat Client"];
 const PRODUCT_INTEREST = ["Full CGI", "FOOH", "AI", "3D / Other"];
 const OCCASIONS = ["Product Launch", "Event / Activation", "Holiday / Seasonal", "Other"];
@@ -37,7 +37,7 @@ const emptyContact = () => ({
   id: uid(), name: "", email: "", phone: "", company: "",
   contactType: "Brand", industry: "Beauty & Fashion", leadSource: "Google Ads",
   stage: "inquiry", clientHistory: "Not Purchased Yet", productInterest: "Full CGI",
-  occasion: "Product Launch", linkedinUrl: "", linkedinStatus: "Not Found", notes: "", tags: "",
+  occasion: "Product Launch", linkedinUrl: "", linkedinStatus: "Not Found", notes: "", tags: "", dateReceived: "",
 });
 
 export default function App() {
@@ -187,7 +187,7 @@ export default function App() {
 
   const bulkExport = useCallback(() => {
     const targets = contacts.filter((c) => selected.has(c.id));
-    const cols = ["name","email","phone","company","contactType","industry","leadSource","stage","clientHistory","productInterest","occasion","tags","linkedinUrl","linkedinStatus"];
+    const cols = ["name","email","phone","company","contactType","industry","leadSource","dateReceived","stage","clientHistory","productInterest","occasion","tags","linkedinUrl","linkedinStatus"];
     const rows = [cols.join(",")].concat(targets.map((c) => cols.map((k) => `"${String(c[k] ?? "").replace(/"/g,'""')}"`).join(",")));
     const csvContent = rows.join("\n");
     try {
@@ -203,7 +203,7 @@ export default function App() {
   }, [contacts, selected]);
 
   const exportCSV = useCallback(() => {
-    const cols = ["name","email","phone","company","contactType","industry","leadSource","stage","clientHistory","productInterest","occasion","tags","linkedinUrl","linkedinStatus"];
+    const cols = ["name","email","phone","company","contactType","industry","leadSource","dateReceived","stage","clientHistory","productInterest","occasion","tags","linkedinUrl","linkedinStatus"];
     const rows = [cols.join(",")].concat(filtered.map((c) => cols.map((k) => `"${String(c[k] ?? "").replace(/"/g,'""')}"`).join(",")));
     const csvContent = rows.join("\n");
     try {
@@ -489,6 +489,7 @@ function ContactModal({ contact, onClose, onSave, onDelete }) {
           <Field label="Contact type"><select className="htSelect" value={form.contactType} onChange={set("contactType")}>{CONTACT_TYPES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="Industry"><select className="htSelect" value={form.industry} onChange={set("industry")}>{INDUSTRIES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="Lead source"><select className="htSelect" value={form.leadSource} onChange={set("leadSource")}>{LEAD_SOURCES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="Date received"><input type="date" className="htInput" value={form.dateReceived} onChange={set("dateReceived")} /></Field>
           <Field label="Pipeline stage"><select className="htSelect" value={form.stage} onChange={set("stage")}>{STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></Field>
           <Field label="Client history"><select className="htSelect" value={form.clientHistory} onChange={set("clientHistory")}>{CLIENT_HISTORY.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="Product interest"><select className="htSelect" value={form.productInterest} onChange={set("productInterest")}>{PRODUCT_INTEREST.map((o) => <option key={o}>{o}</option>)}</select></Field>
