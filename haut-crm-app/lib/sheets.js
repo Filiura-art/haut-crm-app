@@ -26,7 +26,7 @@ function getAuth() {
 const HEADERS = [
   "id", "name", "email", "phone", "company", "contactType", "industry",
   "leadSource", "stage", "clientHistory", "productInterest", "occasion",
-  "linkedinUrl", "linkedinStatus", "notes", "tags",
+  "linkedinUrl", "linkedinStatus", "notes", "tags", "dateReceived",
 ];
 
 function rowToContact(row) {
@@ -49,7 +49,7 @@ export async function ensureHeaders() {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_TAB}!A1:P1`,
+    range: `${SHEET_TAB}!A1:Q1`,
   });
   if (!res.data.values || res.data.values.length === 0) {
     await sheets.spreadsheets.values.update({
@@ -66,7 +66,7 @@ export async function getAllContacts() {
   await ensureHeaders();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_TAB}!A2:P10000`,
+    range: `${SHEET_TAB}!A2:Q10000`,
   });
   const rows = res.data.values || [];
   return rows
@@ -102,7 +102,7 @@ export async function updateContact(contact) {
   if (rowNum === -1) throw new Error("Contact not found: " + contact.id);
   await sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_TAB}!A${rowNum}:P${rowNum}`,
+    range: `${SHEET_TAB}!A${rowNum}:Q${rowNum}`,
     valueInputOption: "RAW",
     requestBody: { values: [contactToRow(contact)] },
   });
@@ -116,6 +116,6 @@ export async function deleteContact(id) {
   // shifting all subsequent rows, which keeps this fast and avoids race conditions.)
   await sheets.spreadsheets.values.clear({
     spreadsheetId: SHEET_ID,
-    range: `${SHEET_TAB}!A${rowNum}:P${rowNum}`,
+    range: `${SHEET_TAB}!A${rowNum}:Q${rowNum}`,
   });
 }
