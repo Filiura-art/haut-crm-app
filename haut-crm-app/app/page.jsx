@@ -30,79 +30,91 @@ export default function Home() {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-[#111111] text-[#ededed] p-6 font-sans">
-      {/* Top Brand Header */}
-      <div className="max-w-[1400px] mx-auto">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-[#c5a059] font-medium mb-1">
-          HAUT CGI
-        </div>
-
+    <div style={{ minHeight: '100vh', backgroundColor: '#09090b', color: '#f4f4f5', padding: '24px', fontFamily: 'sans-serif' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        
         {/* Header Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#222222] mb-6">
-          <div className="flex items-center gap-6">
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+        <div style={{ display: 'flex', justifyContent: 'space-between', itemsCenter: 'center', borderBottom: '1px solid #27272a', paddingBottom: '20px', marginBottom: '24px' }}>
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.2em', color: '#c5a059', textTransform: 'uppercase', marginBottom: '4px' }}>
+              HAUT CGI
+            </div>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>
               {activeTab === 'clients' ? 'Client Ledger' : 'Projects Board'}
             </h1>
-
-            {/* Navigation Switcher */}
-            <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-[#2a2a2a]">
-              <button
-                onClick={() => setActiveTab('clients')}
-                className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
-                  activeTab === 'clients'
-                    ? 'bg-[#282828] text-white shadow-sm'
-                    : 'text-[#888888] hover:text-white'
-                }`}
-              >
-                📋 Client Ledger
-              </button>
-              <button
-                onClick={() => setActiveTab('projects')}
-                className={`px-4 py-2 rounded-md text-xs font-medium transition-all ${
-                  activeTab === 'projects'
-                    ? 'bg-[#282828] text-white shadow-sm'
-                    : 'text-[#888888] hover:text-white'
-                }`}
-              >
-                🎬 Projects Board
-              </button>
-            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {activeTab === 'projects' ? (
-              <button
-                onClick={() => alert('Для добавления нового проекта внесите запись в Google Sheets на вкладке Projects')}
-                className="bg-[#c5a059] hover:bg-[#b38f48] text-black font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
-              >
-                + Add project
-              </button>
-            ) : (
-              <button className="bg-[#c5a059] hover:bg-[#b38f48] text-black font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm">
-                + Add contact
-              </button>
-            )}
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '8px', backgroundColor: '#18181b', padding: '4px', borderRadius: '10px', border: '1px solid #27272a' }}>
+            <button
+              onClick={() => setActiveTab('clients')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: activeTab === 'clients' ? '#27272a' : 'transparent',
+                color: activeTab === 'clients' ? '#ffffff' : '#a1a1aa'
+              }}
+            >
+              📋 Client Ledger
+            </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: activeTab === 'projects' ? '#27272a' : 'transparent',
+                color: activeTab === 'projects' ? '#ffffff' : '#a1a1aa'
+              }}
+            >
+              🎬 Projects Board
+            </button>
           </div>
+
+          {/* Action Button */}
+          <button
+            onClick={() => {
+              if (activeTab === 'projects') {
+                alert('Для создания проекта добавьте строчку в Google Sheets на листе Projects');
+              }
+            }}
+            style={{
+              backgroundColor: '#c5a059',
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: '12px',
+              padding: '10px 18px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            {activeTab === 'projects' ? '+ Add project' : '+ Add contact'}
+          </button>
         </div>
 
-        {/* Content View */}
+        {/* Views */}
         {activeTab === 'clients' ? (
-          <div className="w-full">
-            {/* Рендеринг таблицы/воронки лидов */}
-            <div className="bg-[#181818] border border-[#262626] rounded-xl p-6 text-center text-[#777777] text-sm">
-              Ваша таблица контактов и Sales Pipeline активированы на этой вкладке.
-            </div>
+          <div style={{ padding: '40px', border: '1px dashed #27272a', borderRadius: '12px', textAlign: 'center', color: '#71717a' }}>
+            [Основной список клиентов]
           </div>
         ) : (
-          <div>
+          <>
             {loadingProjects ? (
-              <div className="text-center py-20 text-[#666666] text-sm font-mono">
-                Загрузка проектов из Google Sheets...
+              <div style={{ textAlign: 'center', padding: '60px 0', color: '#71717a', fontSize: '14px' }}>
+                Loading projects from Google Sheets...
               </div>
             ) : (
               <ProjectsBoard projects={projects} onRefresh={fetchProjects} />
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
