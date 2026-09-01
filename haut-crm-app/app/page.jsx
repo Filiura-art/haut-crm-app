@@ -617,7 +617,18 @@ function ContactModal({ contact, onClose, onSave, onDelete }) {
           <div style={{ gridColumn: "1 / -1" }}><Field label="Notes"><textarea className="htInput" rows={3} style={{ resize: "vertical", fontFamily: "inherit" }} value={form.notes} onChange={set("notes")} /></Field></div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 22, paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
-          {!isNew ? <button className="htBtn" style={{ background: "transparent", color: T.rose }} onClick={() => onDelete(form.id)}><Trash2 size={14} /> Delete</button> : <span />}
+          <div style={{ display: "flex", gap: 8 }}>
+            {!isNew ? <button className="htBtn" style={{ background: "transparent", color: T.rose }} onClick={() => onDelete(form.id)}><Trash2 size={14} /> Delete</button> : <span />}
+            {!isNew && (
+              <a
+                href={`/projects?clientId=${encodeURIComponent(form.id)}&clientName=${encodeURIComponent(form.company || form.name)}&contactPerson=${encodeURIComponent(form.name)}`}
+                className="htBtn"
+                style={{ background: `${T.sage}22`, color: T.sage, border: `1px solid ${T.sage}55`, textDecoration: "none" }}
+              >
+                <Plus size={13} /> Create Project
+              </a>
+            )}
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="htBtn" style={{ background: T.panelAlt, color: T.ivory, border: `1px solid ${T.line}` }} onClick={onClose}>Cancel</button>
             <button className="htBtn" style={{ background: T.brass, color: T.bg, fontWeight: 600 }} onClick={() => onSave(form)}><Pencil size={13} /> Save</button>
