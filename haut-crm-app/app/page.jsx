@@ -7,26 +7,32 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('clients');
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [contacts, setContacts] = useState([]);
 
+  // Загрузка контактов/лидов
+  useEffect(() => {
+    fetch('/api/contacts')
+      .then((res) => res.json())
+      .then((data) => setContacts(Array.isArray(data) ? data : []))
+      .catch((err) => console.error(err));
+  }, []);
+
+  // Загрузка проектов
   const fetchProjects = async () => {
     setLoadingProjects(true);
     try {
       const res = await fetch('/api/projects');
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setProjects(data);
-      }
+      if (Array.isArray(data)) setProjects(data);
     } catch (err) {
-      console.error('Failed to fetch projects', err);
+      console.error(err);
     } finally {
       setLoadingProjects(false);
     }
   };
 
   useEffect(() => {
-    if (activeTab === 'projects') {
-      fetchProjects();
-    }
+    if (activeTab === 'projects') fetchProjects();
   }, [activeTab]);
 
   return (
@@ -34,7 +40,7 @@ export default function Home() {
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         
         {/* Header Bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', itemsCenter: 'center', borderBottom: '1px solid #27272a', paddingBottom: '20px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #27272a', paddingBottom: '20px', marginBottom: '24px' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.2em', color: '#c5a059', textTransform: 'uppercase', marginBottom: '4px' }}>
               HAUT CGI
@@ -44,7 +50,7 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* Tabs */}
+          {/* Navigation Switcher */}
           <div style={{ display: 'flex', gap: '8px', backgroundColor: '#18181b', padding: '4px', borderRadius: '10px', border: '1px solid #27272a' }}>
             <button
               onClick={() => setActiveTab('clients')}
@@ -100,10 +106,20 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Views */}
+        {/* Tab Views */}
         {activeTab === 'clients' ? (
-          <div style={{ padding: '40px', border: '1px dashed #27272a', borderRadius: '12px', textAlign: 'center', color: '#71717a' }}>
-            [Основной список клиентов]
+          <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px', padding: '20px' }}>
+            <h3 style={{ fontSize: '14px', color: '#a1a1aa', marginBottom: '16px' }}>
+              Contacts & Leads ({contacts.length})
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {contacts.map((c, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', backgroundColor: '#09090b', borderRadius: '8px', border: '1px solid #27272a' }}>
+                  <span style={{ fontWeight: 'bold' }}>{c.name || c.company || `Contact #${i+1}`}</span>
+                  <span style={{ color: '#a1a1aa', fontSize: '12px' }}>{c.email || c.status}</span>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <>
@@ -112,7 +128,7 @@ export default function Home() {
                 Loading projects from Google Sheets...
               </div>
             ) : (
-              <ProjectsBoard projects={projects} onRefresh={fetchProjects} />
+              <ProjectsBoard projects={projects} />
             )}
           </>
         )}
