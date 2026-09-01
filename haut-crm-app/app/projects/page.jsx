@@ -14,11 +14,13 @@ const T = {
 };
 
 const STAGES = [
+  { id: "tender", label: "Tender" },
   { id: "preproduction", label: "Pre-Production" },
   { id: "production", label: "Production" },
   { id: "postproduction", label: "Post-Production" },
   { id: "delivered", label: "Delivered" },
   { id: "completed", label: "Completed" },
+  { id: "cancelled", label: "Cancelled" },
 ];
 
 const PROJECT_TYPES = ["Full CGI", "FOOH", "Mixed Reality", "AI", "3D / Other"];
@@ -31,7 +33,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const emptyProject = () => ({
   id: uid(), projectName: "", clientId: "", clientName: "", contactPerson: "",
   projectType: "Full CGI", saleType: "", projectPrice: "", currency: "AED", priceAED: "",
-  deadline: "", stage: "preproduction",
+  deadline: "", stage: "tender",
   ballSide: "Our Side", nextAction: "", actionDate: "",
   agreementStatus: "Not Signed", agreementDate: "",
   lpoStatus: "Not Received", lpoDate: "",
@@ -75,7 +77,6 @@ function ProjectsPageInner() {
   const [projects, setProjects] = useState(null);
   const [contacts, setContacts] = useState([]);
   const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
   const [editing, setEditing] = useState(null);
   const [syncState, setSyncState] = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -154,28 +155,31 @@ function ProjectsPageInner() {
   const filtered = useMemo(() => {
     if (!projects) return [];
     return projects.filter((p) => {
-      if (query) {
-        const q = query.toLowerCase();
-        if (!`${p.projectName} ${p.clientName} ${p.contactPerson}`.toLowerCase().includes(q)) return false;
-      }
-      switch (activeFilter) {
-        case "our_side": return p.ballSide === "Our Side" && p.stage !== "completed";
-        case "client_side": return p.ballSide === "Client Side" && p.stage !== "completed";
-        case "payment_due": return outstandingAmount(p) > 0;
-        case "deadline_soon": { const d = daysUntil(p.deadline); return d !== null && d >= 0 && d <= 3; }
-        case "overdue": { const d = daysUntil(p.deadline); const overdueDeadline = d !== null && d < 0;
-          const ad = daysUntil(p.actionDate); const overdueAction = ad !== null && ad < 0 && p.ballSide === "Our Side";
-          return overdueDeadline || overdueAction; }
-        case "delivered": return p.stage === "delivered";
-        default: return p.stage !== "completed" || activeFilter === "all_incl_inactive";
-      }
+      if (!query) return true;
+      const q = query.toLowerCase();
+      return `${p.projectName} ${p.clientName} ${p.contactPerson}`.toLowerCase().includes(q);
     });
-  }, [projects, query, activeFilter]);
+  }, [projects, query]);
 
   const grouped = useMemo(() => {
     const g = {}; STAGES.forEach((s) => (g[s.id] = []));
     filtered.forEach((p) => g[p.stage]?.push(p));
     return g;
+  }, [filtered]);
+
+  const outstandingSummary = useMemo(() => {
+    const inProduction = ["preproduction", "production", "postproduction"];
+    const buckets = { inProduction: 0, delivered: 0, completed: 0 };
+    filtered.forEach((p) => {
+      if (p.stage === "tender" || p.stage === "cancelled") return;
+      const o = outstandingAmount(p);
+      if (o <= 0) return;
+      if (inProduction.includes(p.stage)) buckets.inProduction += o;
+      else if (p.stage === "delivered") buckets.delivered += o;
+      else if (p.stage === "completed") buckets.completed += o;
+    });
+    const total = buckets.inProduction + buckets.delivered + buckets.completed;
+    return { ...buckets, total };
   }, [filtered]);
 
   if (syncState === "loading" && projects === null) {
@@ -215,17 +219,14 @@ function ProjectsPageInner() {
         <button className="htBtn" style={{ background: T.brass, color: T.bg, fontWeight: 600 }} onClick={() => setEditing(emptyProject())}><Plus size={14} /> New project</button>
       </div>
 
-      <div style={{ padding: "14px 28px", display: "flex", gap: 8, flexWrap: "wrap", borderBottom: `1px solid ${T.line}` }}>
-        {[
-          ["all", "All Active"], ["our_side", "Our Side"], ["client_side", "Client Side"],
-          ["payment_due", "Payment Due"], ["deadline_soon", "Deadline Soon"], ["overdue", "Overdue"],
-          ["delivered", "Delivered"], ["all_incl_inactive", "Everything"],
-        ].map(([key, label]) => (
-          <button key={key} className="htBtn" style={{ background: activeFilter === key ? T.brassSoft : T.panelAlt, color: activeFilter === key ? T.brass : T.ivoryDim, border: `1px solid ${T.line}`, fontSize: 12 }} onClick={() => setActiveFilter(key)}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {outstandingSummary.total > 0 && (
+        <div style={{ padding: "14px 28px", display: "flex", gap: 12, flexWrap: "wrap", borderBottom: `1px solid ${T.line}` }}>
+          <SummaryCard label="Total Outstanding" value={outstandingSummary.total} highlight />
+          {outstandingSummary.inProduction > 0 && <SummaryCard label="In Production" value={outstandingSummary.inProduction} />}
+          {outstandingSummary.delivered > 0 && <SummaryCard label="Delivered" value={outstandingSummary.delivered} />}
+          {outstandingSummary.completed > 0 && <SummaryCard label="Completed" value={outstandingSummary.completed} />}
+        </div>
+      )}
 
       <div style={{ padding: "20px 28px 60px" }}>
         {filtered.length === 0 ? (
@@ -268,6 +269,19 @@ function ProjectsPageInner() {
       </div>
 
       {editing && <ProjectModal project={editing} contacts={contacts} onClose={() => setEditing(null)} onSave={saveProject} onDelete={(id) => deleteProjectRow(id).then(() => setEditing(null))} />}
+    </div>
+  );
+}
+
+function SummaryCard({ label, value, highlight }) {
+  return (
+    <div style={{
+      background: highlight ? T.brassSoft : T.panelAlt,
+      border: `1px solid ${highlight ? T.brass + "55" : T.line}`,
+      borderRadius: 8, padding: "10px 16px", minWidth: 150,
+    }}>
+      <div style={{ fontSize: 10, color: highlight ? T.brass : T.ivoryFaint, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: highlight ? T.brass : T.ivory }}>AED {value.toLocaleString()}</div>
     </div>
   );
 }
