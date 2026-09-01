@@ -4,11 +4,10 @@ import React, { useState, useEffect } from 'react';
 import ProjectsBoard from './components/ProjectsBoard';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('clients'); // 'clients' | 'projects'
+  const [activeTab, setActiveTab] = useState('clients');
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
 
-  // Загрузка проектов с сервера
   const fetchProjects = async () => {
     setLoadingProjects(true);
     try {
@@ -32,7 +31,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-black text-zinc-100 p-6 md:p-10">
-      {/* Upper Navigation Header */}
       <header className="border-b border-zinc-800 pb-6 mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -44,7 +42,6 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* Navigation Tabs */}
           <div className="flex items-center gap-2 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
             <button
               onClick={() => setActiveTab('clients')}
@@ -68,11 +65,10 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Action Button */}
           <div className="flex items-center gap-3">
             {activeTab === 'projects' ? (
               <button
-                onClick={() => alert('Для создания проекта заполните запись на вкладке Projects в Google Sheets')}
+                onClick={() => alert('Для создания проекта добавьте строчку в Google Таблицу на вкладке Projects')}
                 className="bg-[#c5a059] hover:bg-[#b38f48] text-black font-semibold text-xs px-4 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
               >
                 + Add project
@@ -88,10 +84,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main View Area */}
       {activeTab === 'clients' ? (
         <div className="p-8 border border-dashed border-zinc-800 rounded-xl text-center text-zinc-500">
-          [Твой существующий список клиентов и воронка продаж]
+          Client Ledger (Sales Pipeline)
         </div>
       ) : (
         <>
