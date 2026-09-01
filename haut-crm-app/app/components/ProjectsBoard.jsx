@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 
 const STAGES = ['Pre-Production', 'Production', 'Post-Production', 'Delivered'];
 
-export default function ProjectsBoard({ projects = [], onRefresh }) {
+export default function ProjectsBoard({ projects = [] }) {
   const [filter, setFilter] = useState('All');
   const [selectedProject, setSelectedProject] = useState(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
@@ -20,7 +20,7 @@ export default function ProjectsBoard({ projects = [], onRefresh }) {
 
   const handleAddToCalendar = async (prj) => {
     if (!prj.actionDate || !prj.waitingFor) {
-      alert('Пожалуйста, заполните Action Date и Next Action перед отправкой в Календарь.');
+      alert('Пожалуйста, заполните Action Date и Next Action.');
       return;
     }
 
@@ -36,13 +36,9 @@ export default function ProjectsBoard({ projects = [], onRefresh }) {
         }),
       });
 
-      if (res.ok) {
-        alert('Задача успешно добавлена в Google Календарь!');
-      } else {
-        alert('Ошибка при добавлении задачи в календарь.');
-      }
+      if (res.ok) alert('Задача добавлена в Google Календарь!');
+      else alert('Ошибка при добавлении.');
     } catch (err) {
-      console.error(err);
       alert('Произошла ошибка.');
     } finally {
       setCalendarLoading(false);
@@ -50,79 +46,76 @@ export default function ProjectsBoard({ projects = [], onRefresh }) {
   };
 
   return (
-    <div className="w-full text-zinc-100 mt-4">
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+    <div style={{ width: '100%' }}>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', overflowX: 'auto' }}>
         {['All', 'Our Side', 'Client Side', 'Payment Due', 'Delivered', 'On Hold'].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              filter === f
-                ? 'bg-[#c5a059] text-black font-bold'
-                : 'bg-zinc-800/80 text-zinc-400 hover:text-white border border-zinc-700/50'
-            }`}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: '500',
+              border: filter === f ? 'none' : '1px solid #27272a',
+              backgroundColor: filter === f ? '#c5a059' : '#18181b',
+              color: filter === f ? '#000000' : '#a1a1aa',
+              cursor: 'pointer'
+            }}
           >
             {f}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Kanban Board */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {STAGES.map((stage) => {
           const stageProjects = filteredProjects.filter((p) => p.stage === stage);
           return (
-            <div key={stage} className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-3 min-h-[500px]">
-              <div className="flex justify-between items-center mb-3 pb-2 border-b border-zinc-800">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{stage}</h3>
-                <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-400 font-mono">
-                  {stageProjects.length}
-                </span>
+            <div key={stage} style={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '12px', padding: '14px', minHeight: '450px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #27272a', paddingBottom: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#a1a1aa', textTransform: 'uppercase' }}>{stage}</span>
+                <span style={{ fontSize: '11px', backgroundColor: '#27272a', padding: '2px 8px', borderRadius: '4px', color: '#f4f4f5' }}>{stageProjects.length}</span>
               </div>
 
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {stageProjects.map((prj) => (
                   <div
                     key={prj.id}
                     onClick={() => setSelectedProject(prj)}
-                    className="bg-zinc-900 border border-zinc-800 hover:border-[#c5a059]/50 rounded-lg p-3 cursor-pointer transition-all shadow-sm group"
+                    style={{ backgroundColor: '#09090b', border: '1px solid #27272a', borderRadius: '8px', padding: '12px', cursor: 'pointer' }}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-sm text-zinc-100 group-hover:text-[#c5a059] transition-colors">
-                        {prj.name}
-                      </span>
-                      <span className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
-                        {prj.type}
-                      </span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '13px', color: '#ffffff' }}>{prj.name}</span>
+                      <span style={{ fontSize: '10px', backgroundColor: '#27272a', color: '#a1a1aa', padding: '2px 6px', borderRadius: '4px' }}>{prj.type}</span>
                     </div>
 
-                    <div className="text-xs text-zinc-400 mb-3">{prj.clientId}</div>
+                    <div style={{ fontSize: '11px', color: '#71717a', marginBottom: '10px' }}>{prj.clientId}</div>
 
-                    <div className="mb-3">
-                      <div
-                        className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded mb-1 uppercase tracking-wide ${
-                          prj.ball === 'Client Side'
-                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                        }`}
-                      >
+                    <div style={{ marginBottom: '10px' }}>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        backgroundColor: prj.ball === 'Client Side' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                        color: prj.ball === 'Client Side' ? '#fbbf24' : '#60a5fa',
+                        border: prj.ball === 'Client Side' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(59, 130, 246, 0.3)'
+                      }}>
                         {prj.ball}
-                      </div>
+                      </span>
                       {prj.waitingFor && (
-                        <p className="text-xs text-zinc-300 line-clamp-2">
-                          <span className="text-zinc-500">Next:</span> {prj.waitingFor}
+                        <p style={{ fontSize: '11px', color: '#d4d4d8', margin: '4px 0 0 0' }}>
+                          <span style={{ color: '#71717a' }}>Next:</span> {prj.waitingFor}
                         </p>
                       )}
                     </div>
 
-                    <div className="flex justify-between items-center text-[11px] border-t border-zinc-800/80 pt-2 text-zinc-400">
-                      <span className="font-mono text-zinc-200">
-                        {prj.calculated?.totalAED?.toLocaleString()} AED
-                      </span>
-                      {prj.deadline && (
-                        <span className="text-zinc-400 font-mono">
-                          📅 {prj.deadline}
-                        </span>
-                      )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', borderTop: '1px solid #27272a', paddingTop: '8px', color: '#a1a1aa' }}>
+                      <span>{prj.calculated?.totalAED?.toLocaleString()} AED</span>
+                      {prj.deadline && <span>📅 {prj.deadline}</span>}
                     </div>
                   </div>
                 ))}
@@ -132,78 +125,34 @@ export default function ProjectsBoard({ projects = [], onRefresh }) {
         })}
       </div>
 
+      {/* Modal Detail */}
       {selectedProject && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 text-zinc-100 space-y-6">
-            <div className="flex justify-between items-start border-b border-zinc-800 pb-4">
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', itemsCenter: 'center', justifyContent: 'center', padding: '16px', zIndex: 1000 }}>
+          <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '16px', maxWidth: '600px', width: '100%', padding: '24px', color: '#ffffff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #27272a', paddingBottom: '12px', marginBottom: '16px' }}>
               <div>
-                <h2 className="text-xl font-bold text-white">{selectedProject.name}</h2>
-                <p className="text-sm text-zinc-400">Client: {selectedProject.clientId} • Contact: {selectedProject.contactPerson}</p>
+                <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{selectedProject.name}</h2>
+                <p style={{ fontSize: '12px', color: '#a1a1aa', margin: '4px 0 0 0' }}>Client: {selectedProject.clientId}</p>
               </div>
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="text-zinc-400 hover:text-white text-lg font-bold"
-              >
-                ✕
-              </button>
+              <button onClick={() => setSelectedProject(null)} style={{ background: 'none', border: 'none', color: '#a1a1aa', fontSize: '18px', cursor: 'pointer' }}>✕</button>
             </div>
 
-            <div className="bg-zinc-800/40 border border-zinc-800 p-4 rounded-xl space-y-3">
-              <h4 className="text-xs font-semibold text-[#c5a059] uppercase tracking-wider">Action / Ball & Calendar</h4>
-              <div className="flex gap-4 items-center">
-                <div className="text-sm">
-                  <span className="text-zinc-400">Current Ball:</span>{' '}
-                  <span className="font-bold text-white">{selectedProject.ball}</span>
-                </div>
-                <div className="text-sm">
-                  <span className="text-zinc-400">Action Date:</span>{' '}
-                  <span className="font-bold text-white font-mono">{selectedProject.actionDate || 'Not set'}</span>
-                </div>
-              </div>
-              <p className="text-sm text-zinc-200 bg-zinc-900 p-2.5 rounded border border-zinc-800">
-                <span className="text-zinc-500">Waiting for / Next Action:</span> {selectedProject.waitingFor || 'N/A'}
-              </p>
+            <div style={{ backgroundColor: '#09090b', border: '1px solid #27272a', padding: '14px', borderRadius: '10px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#c5a059', marginBottom: '8px' }}>ACTION / BALL</div>
+              <div style={{ fontSize: '13px', marginBottom: '4px' }}>Ball: <strong>{selectedProject.ball}</strong></div>
+              <div style={{ fontSize: '13px', marginBottom: '12px' }}>Next Action: {selectedProject.waitingFor}</div>
 
               <button
                 onClick={() => handleAddToCalendar(selectedProject)}
                 disabled={calendarLoading}
-                className="w-full bg-[#c5a059] hover:bg-[#b38f48] text-black font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
+                style={{ width: '100%', backgroundColor: '#c5a059', color: '#000000', fontWeight: 'bold', padding: '8px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
               >
-                📅 {calendarLoading ? 'Adding to Google Calendar...' : 'Add Action to Google Calendar'}
+                📅 {calendarLoading ? 'Adding...' : 'Add Action to Google Calendar'}
               </button>
             </div>
 
-            <div className="bg-zinc-800/40 border border-zinc-800 p-4 rounded-xl space-y-3">
-              <h4 className="text-xs font-semibold text-[#c5a059] uppercase tracking-wider">Financial Summary (AED)</h4>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="bg-zinc-900 p-2.5 rounded border border-zinc-800">
-                  <div className="text-[10px] text-zinc-400">Total Value</div>
-                  <div className="text-sm font-bold font-mono text-white">
-                    {selectedProject.calculated?.totalAED?.toLocaleString()} AED
-                  </div>
-                </div>
-                <div className="bg-zinc-900 p-2.5 rounded border border-zinc-800">
-                  <div className="text-[10px] text-zinc-400">Paid</div>
-                  <div className="text-sm font-bold font-mono text-emerald-400">
-                    {selectedProject.calculated?.paidAED?.toLocaleString()} AED
-                  </div>
-                </div>
-                <div className="bg-zinc-900 p-2.5 rounded border border-zinc-800">
-                  <div className="text-[10px] text-zinc-400">Outstanding</div>
-                  <div className="text-sm font-bold font-mono text-amber-400">
-                    {selectedProject.calculated?.outstandingAED?.toLocaleString()} AED
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setSelectedProject(null)}
-                className="bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2 px-5 rounded-lg text-sm"
-              >
-                Close
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setSelectedProject(null)} style={{ backgroundColor: '#27272a', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer' }}>Close</button>
             </div>
           </div>
         </div>
