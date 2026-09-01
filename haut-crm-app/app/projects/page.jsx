@@ -1,6 +1,7 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Plus, X, Search, ChevronDown, Trash2, Pencil, ArrowLeft } from "lucide-react";
 
 const T = {
@@ -17,10 +18,10 @@ const STAGES = [
   { id: "production", label: "Production" },
   { id: "postproduction", label: "Post-Production" },
   { id: "delivered", label: "Delivered" },
+  { id: "completed", label: "Completed" },
 ];
 
 const PROJECT_TYPES = ["Full CGI", "FOOH", "Mixed Reality", "AI", "3D / Other"];
-const PROJECT_STATUSES = ["Active", "On Hold", "Completed", "Cancelled"];
 const CURRENCIES = ["AED", "USD", "EUR"];
 const BALL_SIDES = ["Our Side", "Client Side"];
 const YESNO = { agreement: ["Not Signed", "Signed"], lpo: ["Not Received", "Received"], payment: ["Not Paid", "Paid"] };
@@ -30,7 +31,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const emptyProject = () => ({
   id: uid(), projectName: "", clientId: "", clientName: "", contactPerson: "",
   projectType: "Full CGI", saleType: "", projectPrice: "", currency: "AED", priceAED: "",
-  deadline: "", projectStatus: "Active", stage: "preproduction",
+  deadline: "", stage: "preproduction",
   ballSide: "Our Side", nextAction: "", actionDate: "",
   agreementStatus: "Not Signed", agreementDate: "",
   lpoStatus: "Not Received", lpoDate: "",
@@ -63,6 +64,14 @@ function outstandingAmount(p) {
 }
 
 export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<div style={{ background: T.bg, height: "100vh" }} />}>
+      <ProjectsPageInner />
+    </Suspense>
+  );
+}
+
+function ProjectsPageInner() {
   const [projects, setProjects] = useState(null);
   const [contacts, setContacts] = useState([]);
   const [query, setQuery] = useState("");
@@ -88,6 +97,22 @@ export default function ProjectsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const clientId = searchParams.get("clientId");
+    const clientName = searchParams.get("clientName");
+    const contactPerson = searchParams.get("contactPerson");
+    if (clientId) {
+      setEditing({
+        ...emptyProject(),
+        clientId,
+        clientName: clientName || "",
+        contactPerson: contactPerson || "",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const saveProject = useCallback(async (p) => {
     setSyncState("saving");
@@ -134,16 +159,15 @@ export default function ProjectsPage() {
         if (!`${p.projectName} ${p.clientName} ${p.contactPerson}`.toLowerCase().includes(q)) return false;
       }
       switch (activeFilter) {
-        case "our_side": return p.ballSide === "Our Side" && p.projectStatus === "Active";
-        case "client_side": return p.ballSide === "Client Side" && p.projectStatus === "Active";
+        case "our_side": return p.ballSide === "Our Side" && p.stage !== "completed";
+        case "client_side": return p.ballSide === "Client Side" && p.stage !== "completed";
         case "payment_due": return outstandingAmount(p) > 0;
         case "deadline_soon": { const d = daysUntil(p.deadline); return d !== null && d >= 0 && d <= 3; }
         case "overdue": { const d = daysUntil(p.deadline); const overdueDeadline = d !== null && d < 0;
           const ad = daysUntil(p.actionDate); const overdueAction = ad !== null && ad < 0 && p.ballSide === "Our Side";
           return overdueDeadline || overdueAction; }
         case "delivered": return p.stage === "delivered";
-        case "on_hold": return p.projectStatus === "On Hold";
-        default: return p.projectStatus === "Active" || activeFilter === "all_incl_inactive";
+        default: return p.stage !== "completed" || activeFilter === "all_incl_inactive";
       }
     });
   }, [projects, query, activeFilter]);
@@ -195,7 +219,7 @@ export default function ProjectsPage() {
         {[
           ["all", "All Active"], ["our_side", "Our Side"], ["client_side", "Client Side"],
           ["payment_due", "Payment Due"], ["deadline_soon", "Deadline Soon"], ["overdue", "Overdue"],
-          ["delivered", "Delivered"], ["on_hold", "On Hold"], ["all_incl_inactive", "Everything"],
+          ["delivered", "Delivered"], ["all_incl_inactive", "Everything"],
         ].map(([key, label]) => (
           <button key={key} className="htBtn" style={{ background: activeFilter === key ? T.brassSoft : T.panelAlt, color: activeFilter === key ? T.brass : T.ivoryDim, border: `1px solid ${T.line}`, fontSize: 12 }} onClick={() => setActiveFilter(key)}>
             {label}
@@ -295,9 +319,7 @@ function ProjectModal({ project, contacts, onClose, onSave, onDelete }) {
           <Field label="Sale type (from lead)"><input className="htInput" value={form.saleType} onChange={set("saleType")} placeholder="e.g. First Sale, Repeat Client" /></Field>
 
           <Field label="Deadline"><input type="date" className="htInput" value={form.deadline} onChange={set("deadline")} /></Field>
-          <Field label="Project status"><select className="htSelect" value={form.projectStatus} onChange={set("projectStatus")}>{PROJECT_STATUSES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-
-          <Field label="Production stage"><select className="htSelect" value={form.stage} onChange={set("stage")}>{STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></Field>
+          <Field label="Project stage"><select className="htSelect" value={form.stage} onChange={set("stage")}>{STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select></Field>
           <div />
 
           <SectionTitle>Ball / Next Action</SectionTitle>
