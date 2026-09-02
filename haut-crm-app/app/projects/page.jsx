@@ -310,6 +310,38 @@ function ProjectModal({ project, contacts, onClose, onSave, onDelete }) {
 
   const outstanding = outstandingAmount(form);
 
+  const [calSaving, setCalSaving] = useState(false);
+  const [calMsg, setCalMsg] = useState("");
+
+  const addToCalendar = async () => {
+    if (!form.actionDate || !form.nextAction.trim()) {
+      setCalMsg("Fill in Action date and Next action first.");
+      return;
+    }
+    setCalSaving(true);
+    setCalMsg("");
+    try {
+      const dateTime = `${form.actionDate}T09:00`;
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `${form.projectName || "Project"} — ${form.nextAction.trim()}`,
+          dateTime,
+          leads: [{ name: form.projectName, email: form.contactPerson, phone: "", company: form.clientName }],
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setCalMsg("Added to Google Calendar ✓");
+    } catch (e) {
+      setCalMsg("Error: " + e.message);
+    } finally {
+      setCalSaving(false);
+    }
+  };
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ background: T.panel, border: `1px solid ${T.line}`, borderRadius: 10, width: "100%", maxWidth: 640, maxHeight: "88vh", overflowY: "auto", padding: 24 }}>
@@ -340,6 +372,12 @@ function ProjectModal({ project, contacts, onClose, onSave, onDelete }) {
           <Field label="Ball on"><select className="htSelect" value={form.ballSide} onChange={set("ballSide")}>{BALL_SIDES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="Action date"><input type="date" className="htInput" value={form.actionDate} onChange={set("actionDate")} /></Field>
           <div style={{ gridColumn: "1 / -1" }}><Field label="Waiting for / next action"><input className="htInput" value={form.nextAction} onChange={set("nextAction")} placeholder="e.g. Waiting for concept approval" /></Field></div>
+          <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 10 }}>
+            <button type="button" className="htBtn" style={{ background: T.brassSoft, color: T.brass, border: `1px solid ${T.brass}55` }} onClick={addToCalendar} disabled={calSaving}>
+              <Plus size={13} /> {calSaving ? "Adding…" : "Add to Google Calendar"}
+            </button>
+            {calMsg && <span style={{ fontSize: 12, color: calMsg.startsWith("Error") ? T.rose : T.sage }}>{calMsg}</span>}
+          </div>
 
           <SectionTitle>Pricing</SectionTitle>
           <Field label="Project price"><input className="htInput" value={form.projectPrice} onChange={set("projectPrice")} placeholder="0" /></Field>
